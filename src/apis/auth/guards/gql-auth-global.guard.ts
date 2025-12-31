@@ -21,10 +21,22 @@ export class GqlAuthGuardGlobal extends AuthGuard('access') {
   }
 
   canActivate(context: ExecutionContext) {
-    // ✅ Render Health Check 예외 처리
     const req = this.getRequest(context);
     const url = req?.url ?? req?.originalUrl ?? '';
+    const method = req?.method ?? '';
+
+    // ✅ Render Health Check 예외 처리
     if (url === '/healthz' || url.startsWith('/healthz')) {
+      return true;
+    }
+
+    // ✅ GraphQL GET 요청 예외 처리 (introspection, Playground 등)
+    if (url === '/graphql' && method === 'GET') {
+      return true;
+    }
+
+    // ✅ 루트 경로 GET 요청 예외 처리
+    if (url === '/' && method === 'GET') {
       return true;
     }
 
