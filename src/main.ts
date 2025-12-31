@@ -19,6 +19,6 @@ async function bootstrap() {
   app.use(graphqlUploadExpress());
   // Render는 PORT 환경 변수를 제공합니다
   const port = process.env.PORT || 3001;
-  await app.listen(port);
+  await app.listen(port as any, '0.0.0.0');
 }
 bootstrap();

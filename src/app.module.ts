@@ -19,6 +19,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { WebPushInitializer } from './commons/push/web-push.initializer';
 import { CronModule } from './cron/cron.module';
 import { PushSubscriptionsModule } from './apis/push-subscription/push-subscriptions.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -102,6 +103,7 @@ import { PushSubscriptionsModule } from './apis/push-subscription/push-subscript
     }),
     AuthModule,
   ],
+  controllers: [HealthController],
   providers: [
     {
       provide: APP_GUARD,
