@@ -17,7 +17,7 @@ import { JwtKakaoStrategy } from './strategies/jwt-social-kakao.strategy';
   imports: [
     JwtModule.register({}), //
     UsersModule,
-    CacheModule,
+    // CacheModule,
   ],
   providers: [
     JwtAccessStrategy, // 여기서 주입하면 전역에서 사용가능

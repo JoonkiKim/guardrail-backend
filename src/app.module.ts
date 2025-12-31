@@ -22,7 +22,6 @@ import { PushSubscriptionsModule } from './apis/push-subscription/push-subscript
 
 @Module({
   imports: [
-    AuthModule,
     UsersModule,
     GuardrailsModule,
     InfusionsModule,
@@ -101,6 +100,7 @@ import { PushSubscriptionsModule } from './apis/push-subscription/push-subscript
         };
       },
     }),
+    AuthModule,
   ],
   providers: [
     {
