@@ -50,7 +50,7 @@ import { PushSubscriptionsModule } from './apis/push-subscription/push-subscript
       }, // 아폴로 에러를 받을 일이 없는경우에는 formatError는 없애줘도 된다
     }),
     TypeOrmModule.forRoot({
-      type: process.env.DATABASE_TYPE as 'mysql',
+      type: process.env.DATABASE_TYPE as 'postgres',
       host: process.env.DATABASE_HOST,
       port: Number(process.env.DATABASE_PORT),
       username: process.env.DATABASE_USERNAME,

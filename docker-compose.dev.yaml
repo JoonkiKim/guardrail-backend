@@ -13,12 +13,13 @@ services:
       - ./.env.docker
 
   my-database:
-    image: mysql
+    image: postgres:15-alpine # mysql → postgres:15-alpine
     environment:
-      MYSQL_DATABASE: "mydocker"
-      MYSQL_ROOT_PASSWORD: "june1508!!"
+      POSTGRES_DB: "mydocker" # MYSQL_DATABASE → POSTGRES_DB
+      POSTGRES_USER: "postgres" # 추가
+      POSTGRES_PASSWORD: "june1508!!" # MYSQL_ROOT_PASSWORD → POSTGRES_PASSWORD
     ports:
-      - 3306:3306
+      - 5432:5432 # 3306 → 5432
 
   my-redis:
     image: redis:latest
