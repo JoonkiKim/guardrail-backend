@@ -62,12 +62,43 @@ import { PushSubscriptionsModule } from './apis/push-subscription/push-subscript
       synchronize: true,
       logging: true,
     }),
-    // CacheModule.registerAsync({ isGlobal: true, useClass: CacheConfigService }), // 여기서 isGlobal: true를 설정해주면, 전역에서 캐시를 사용할 수 있게 된다!
-    CacheModule.register<RedisClientOptions>({
-      // 추가
-      store: redisStore as unknown as any, // 타입 단언
-      url: process.env.REDIS_URL || 'redis://my-redis:6379',
-      isGlobal: true,
+    // Upstash Redis 연결 설정 (Redis 프로토콜 사용)
+    CacheModule.registerAsync<RedisClientOptions>({
+      useFactory: () => {
+        const redisUrl = process.env.REDIS_URL;
+
+        if (!redisUrl) {
+          console.warn(
+            '⚠️ REDIS_URL이 설정되지 않았습니다. 메모리 캐시를 사용합니다.',
+          );
+          return {
+            ttl: 300,
+            max: 100,
+            isGlobal: true,
+          };
+        }
+
+        // Upstash는 TLS를 사용하므로 rediss:// 프로토콜 사용
+        return {
+          store: redisStore as unknown as any, // 타입 단언
+          url: redisUrl, // rediss://default:password@endpoint:port 형식
+          isGlobal: true,
+          // 연결 옵션
+          socket: {
+            // TLS 설정 (Upstash는 TLS 필수)
+            tls: true,
+            rejectUnauthorized: false, // Upstash 인증서 자동 검증
+          },
+          // 재시도 설정
+          retryStrategy: (times) => {
+            const delay = Math.min(times * 50, 2000);
+            return delay;
+          },
+          maxRetriesPerRequest: 3,
+          // 연결 실패 시에도 앱이 계속 실행되도록
+          enableReadyCheck: false,
+        };
+      },
     }),
   ],
   providers: [
