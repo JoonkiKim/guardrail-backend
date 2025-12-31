@@ -62,6 +62,7 @@ import { PushSubscriptionsModule } from './apis/push-subscription/push-subscript
       synchronize: true,
       logging: true,
     }),
+    // CacheModule.registerAsync({ isGlobal: true, useClass: CacheConfigService }), // 여기서 isGlobal: true를 설정해주면, 전역에서 캐시를 사용할 수 있게 된다!
     // Upstash Redis 연결 설정 (Redis 프로토콜 사용)
     CacheModule.registerAsync<RedisClientOptions>({
       useFactory: () => {
