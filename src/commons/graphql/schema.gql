@@ -1,0 +1,282 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Guardrail {
+  id: String!
+  user: User!
+  feeling: String!
+  mostImpt: String!
+  diary: String!
+  thanks: String!
+  direction: String!
+  oneStep: String!
+  ignorance: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type InfusionDetail {
+  id: String!
+  description: String!
+  periodType: PeriodType!
+  infusion: Infusion
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""Period type for infusion details"""
+enum PeriodType {
+  ONE_WEEK
+  ONE_MONTH
+  ONE_YEAR
+  TEN_YEARS
+}
+
+type Infusion {
+  id: String!
+  user: User!
+  title: String!
+  category: InfusionCategory!
+  description: String!
+  infusionDetails: [InfusionDetail!]
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""Infusion category types"""
+enum InfusionCategory {
+  DECISION
+  STRESS
+  CONSUMPTION
+}
+
+type PavlovDetail {
+  id: String!
+  description: String!
+  pavlov: Pavlov!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Pavlov {
+  id: String!
+  user: User!
+  name: String!
+  pavlovDetails: [PavlovDetail!]!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Todo {
+  id: String!
+  user: User!
+  title: String!
+  description: String
+  date: DateTime!
+  startTime: String!
+  endTime: String!
+  priority: TodoPriority!
+  repeatType: String
+  repeatUntil: DateTime
+  isRepeating: Boolean!
+  parentTodoId: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""Todo priority levels"""
+enum TodoPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+type PushSubscription {
+  id: String!
+  user: User!
+  endpoint: String!
+  expirationTime: String
+  keys: String!
+  createdAt: DateTime!
+}
+
+type User {
+  id: String!
+  name: String!
+  email: String!
+  phone: String!
+  birthDate: DateTime
+  marketingAgreed: Boolean!
+  termsAgreed: Boolean!
+  privacyAgreed: Boolean!
+  guardrails: [Guardrail!]
+  todos: [Todo!]
+  infusions: [Infusion!]
+  pavlovs: [Pavlov!]
+  pushSubscriptions: [PushSubscription!]
+  reminderHour: Int
+  pushNotificationEnabled: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Query {
+  fetchLoginUser: User!
+  fetchGuardrails: [Guardrail!]!
+  fetchGuardrail(guardrailId: String!): Guardrail!
+  fetchInfusions: [Infusion!]!
+  fetchInfusion(infusionId: String!): Infusion!
+  fetchTodos: [Todo!]!
+  fetchTodo(todoId: String!): Todo!
+  fetchTodosByMonth(year: Float!, month: Float!): [Todo!]!
+  fetchPavlovs: [Pavlov!]!
+  fetchPavlov(pavlovId: String!): Pavlov!
+}
+
+type Mutation {
+  login(email: String!, password: String!): String!
+  restoreAccessToken: String!
+  logout: String!
+  createUser(createUserInput: CreateUserInput!): User!
+  updateUser(userId: String!, updateUserInput: UpdateUserInput!): User!
+  deleteUser(userId: String!): String!
+  updateReminderHour(updateReminderHourInput: UpdateReminderHourInput!): User!
+  updatePushNotification(updatePushNotificationInput: UpdatePushNotificationInput!): User!
+  sendTestPushNotification(userId: String): String!
+  createPushSubscription(input: CreatePushSubscriptionInput!): PushSubscription!
+  removePushSubscription(endpoint: String!): Boolean!
+  createGuardrail(createGuardrailInput: CreateGuardrailInput!): Guardrail!
+  updateGuardrail(guardrailId: String!, updateGuardrailInput: UpdateGuardrailInput!): Guardrail!
+  deleteGuardrail(guardrailId: String!): Boolean!
+  createInfusion(createInfusionInput: CreateInfusionInput!): Infusion!
+  updateInfusion(infusionId: String!, updateInfusionInput: UpdateInfusionInput!): Infusion!
+  deleteInfusion(infusionId: String!): Boolean!
+  createTodo(createTodoInput: CreateTodoInput!): [Todo!]!
+  updateTodo(todoId: String!, updateTodoInput: UpdateTodoInput!): Todo!
+  deleteTodo(todoId: String!): Boolean!
+  createPavlov(createPavlovInput: CreatePavlovInput!): Pavlov!
+  updatePavlov(pavlovId: String!, updatePavlovInput: UpdatePavlovInput!): Pavlov!
+  deletePavlov(pavlovId: String!): Boolean!
+}
+
+input CreateUserInput {
+  name: String!
+  email: String!
+  password: String!
+  phone: String!
+  birthDate: String!
+  termsAgreed: Boolean!
+  privacyAgreed: Boolean!
+  marketingAgreed: Boolean = false
+}
+
+input UpdateUserInput {
+  name: String
+  email: String
+  password: String
+  phone: String
+  birthDate: String
+  termsAgreed: Boolean
+  privacyAgreed: Boolean
+  marketingAgreed: Boolean = false
+}
+
+input UpdateReminderHourInput {
+  reminderHour: Int!
+}
+
+input UpdatePushNotificationInput {
+  enabled: Boolean!
+}
+
+input CreatePushSubscriptionInput {
+  endpoint: String!
+  expirationTime: String
+  keys: PushSubscriptionKeysInput!
+}
+
+input PushSubscriptionKeysInput {
+  p256dh: String!
+  auth: String!
+}
+
+input CreateGuardrailInput {
+  feeling: String!
+  mostImpt: String!
+  diary: String!
+  thanks: String!
+  direction: String!
+  oneStep: String!
+  ignorance: String!
+}
+
+input UpdateGuardrailInput {
+  feeling: String
+  mostImpt: String
+  diary: String
+  thanks: String
+  direction: String
+  oneStep: String
+  ignorance: String
+}
+
+input CreateInfusionInput {
+  title: String!
+  category: InfusionCategory!
+  description: String!
+  infusionDetails: [InfusionDetailInput!]
+}
+
+input InfusionDetailInput {
+  description: String!
+  periodType: PeriodType!
+}
+
+input UpdateInfusionInput {
+  title: String
+  category: InfusionCategory
+  description: String
+  infusionDetails: [InfusionDetailInput!]
+}
+
+input CreateTodoInput {
+  title: String!
+  description: String
+  date: DateTime!
+  startTime: String!
+  endTime: String!
+  priority: TodoPriority!
+  repeatType: String
+  repeatUntil: DateTime
+}
+
+input UpdateTodoInput {
+  title: String
+  description: String
+  date: DateTime
+  startTime: String
+  endTime: String
+  priority: TodoPriority
+  repeatType: String
+  repeatUntil: DateTime
+}
+
+input CreatePavlovInput {
+  name: String!
+  pavlovDetails: [PavlovDetailInput!]!
+}
+
+input PavlovDetailInput {
+  description: String!
+}
+
+input UpdatePavlovInput {
+  name: String
+  pavlovDetails: [PavlovDetailInput!]
+}
