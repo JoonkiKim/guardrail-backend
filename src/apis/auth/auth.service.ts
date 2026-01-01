@@ -50,31 +50,53 @@ export class AuthService {
   }
 
   // // 리프레시 토큰 발급 함수
+  // setRefreshToken({ user, context }: IAuthServiceSetRefreshToken): void {
+  //   const refreshToken = this.jwtService.sign(
+  //     { sub: user.id },
+  //     // 나중에 이런 비밀번호들은 env에 다 빼둬야한다
+  //     { secret: process.env.JWT_REFRESH_PASSWORD, expiresIn: '2w' },
+  //   );
+
+  //   // 개발환경
+
+  //   // context.res.setHeader(
+  //   //   'set-Cookie',
+  //   //   `refreshToken=${refreshToken}; path=/;`,
+  //   // );
+
+  //   // 개발환경 설정 (localhost 간 통신)
+  //   context.res.setHeader(
+  //     'set-Cookie',
+  //     `refreshToken=${refreshToken}; path=/; HttpOnly; SameSite=Lax; Max-Age=1209600`,
+  //   );
+
+  //   // [배포환경에서는 아래와 같이 작성하자]
+  //   // domain은 내가 배포할 사이트 주소(앞에 점.을 꼭 붙여줘야한다), 주소가 틀리면 쿠키를 전달 안하게 만들 수 있다
+  //   // context.res.setHeader('set-Cookie', `refreshToken=${refreshToken}; path=/; domain=.mybacksite.com; SameSite=None; Secure; httpOnly`);
+  //   // 누가 사용가능한지 명확하게 지정해주는 부분 -> 뒤쪽에 프론트엔드(브라우저) 주소를 작성해준다
+  //   // context.res.setHeader('Access-Control-Allow-Origin', 'https://myfrontsite.com');
+  // }
   setRefreshToken({ user, context }: IAuthServiceSetRefreshToken): void {
     const refreshToken = this.jwtService.sign(
       { sub: user.id },
-      // 나중에 이런 비밀번호들은 env에 다 빼둬야한다
       { secret: process.env.JWT_REFRESH_PASSWORD, expiresIn: '2w' },
     );
 
-    // 개발환경
+    const isProduction = process.env.NODE_ENV === 'production';
 
-    // context.res.setHeader(
-    //   'set-Cookie',
-    //   `refreshToken=${refreshToken}; path=/;`,
-    // );
-
-    // 개발환경 설정 (localhost 간 통신)
-    context.res.setHeader(
-      'set-Cookie',
-      `refreshToken=${refreshToken}; path=/; HttpOnly; SameSite=Lax; Max-Age=1209600`,
-    );
-
-    // [배포환경에서는 아래와 같이 작성하자]
-    // domain은 내가 배포할 사이트 주소(앞에 점.을 꼭 붙여줘야한다), 주소가 틀리면 쿠키를 전달 안하게 만들 수 있다
-    // context.res.setHeader('set-Cookie', `refreshToken=${refreshToken}; path=/; domain=.mybacksite.com; SameSite=None; Secure; httpOnly`);
-    // 누가 사용가능한지 명확하게 지정해주는 부분 -> 뒤쪽에 프론트엔드(브라우저) 주소를 작성해준다
-    // context.res.setHeader('Access-Control-Allow-Origin', 'https://myfrontsite.com');
+    if (isProduction) {
+      // 배포 환경: 크로스 도메인 쿠키 설정
+      context.res.setHeader(
+        'set-Cookie',
+        `refreshToken=${refreshToken}; path=/; HttpOnly; SameSite=None; Secure; Max-Age=1209600`,
+      );
+    } else {
+      // 개발 환경: localhost 간 통신
+      context.res.setHeader(
+        'set-Cookie',
+        `refreshToken=${refreshToken}; path=/; HttpOnly; SameSite=Lax; Max-Age=1209600`,
+      );
+    }
   }
 
   getAccessToken({ user }: IAuthServiceGetAccessToken): string {
