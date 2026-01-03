@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -171,14 +171,22 @@ export class TodosService {
     const startDate = new Date(year, month - 1, 1); // month는 0부터 시작하므로 -1
     const endDate = new Date(year, month, 0, 23, 59, 59, 999); // 다음 달 0일 = 이번 달 마지막 날
 
-    return this.todosRepository
-      .createQueryBuilder('todo')
-      .leftJoinAndSelect('todo.user', 'user')
-      .where('user.id = :userId', { userId })
-      .andWhere('todo.date >= :startDate', { startDate })
-      .andWhere('todo.date <= :endDate', { endDate })
-      .orderBy('todo.date', 'ASC')
-      .addOrderBy('todo.startTime', 'ASC')
-      .getMany();
+    // return this.todosRepository
+    //   .createQueryBuilder('todo')
+    //   .leftJoinAndSelect('todo.user', 'user')
+    //   .where('user.id = :userId', { userId })
+    //   .andWhere('todo.date >= :startDate', { startDate })
+    //   .andWhere('todo.date <= :endDate', { endDate })
+    //   .orderBy('todo.date', 'ASC')
+    //   .addOrderBy('todo.startTime', 'ASC')
+    //   .getMany();
+    return this.todosRepository.find({
+      where: {
+        user: { id: userId },
+        date: Between(startDate, endDate),
+      },
+      relations: ['user'],
+      order: { date: 'ASC', startTime: 'ASC' },
+    });
   }
 }
