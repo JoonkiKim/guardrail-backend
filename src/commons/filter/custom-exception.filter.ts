@@ -13,41 +13,55 @@ import { GqlExecutionContext } from '@nestjs/graphql';
 @Catch()
 export class CustomExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
-    // GraphQL 요청인지 확인
-    const contextType = host.getType();
-    const isGraphql = contextType === 'graphql';
-    
+    // 먼저 HTTP 컨텍스트로 request를 가져와서 URL 확인
     let request: Request | null = null;
     let response: Response | null = null;
     let url = '';
     let method = '';
+    let isGraphql = false;
 
+    try {
+      const httpCtx = host.switchToHttp();
+      request = httpCtx.getRequest<Request>();
+      response = httpCtx.getResponse<Response>();
+      url = request?.url ?? '';
+      method = request?.method ?? '';
+      isGraphql = url.startsWith('/graphql');
+    } catch (error) {
+      // HTTP 컨텍스트를 가져올 수 없는 경우 (드물지만)
+      url = '';
+      method = '';
+    }
+
+    // GraphQL 요청인 경우, GraphQL 컨텍스트로 다시 시도
     if (isGraphql) {
-      // GraphQL 요청인 경우
       try {
-        const gqlContext = GqlExecutionContext.create(host);
+        // ExecutionContext로 타입 단언 (ExceptionFilter에서는 실제로 ExecutionContext임)
+        const gqlContext = GqlExecutionContext.create(host as any);
         const ctx = gqlContext.getContext();
-        request = ctx.req;
-        response = ctx.res;
+        if (ctx?.req) {
+          request = ctx.req;
+        }
+        if (ctx?.res) {
+          response = ctx.res;
+        }
         url = request?.url ?? request?.originalUrl ?? '/graphql';
         method = request?.method ?? 'POST';
       } catch (error) {
-        // GraphQL 컨텍스트를 가져올 수 없는 경우
+        // GraphQL 컨텍스트를 가져올 수 없는 경우, 기본값 사용
         url = '/graphql';
         method = 'POST';
       }
-    } else {
-      // HTTP 요청인 경우
-      const ctx = host.switchToHttp();
-      request = ctx.getRequest<Request>();
-      response = ctx.getResponse<Response>();
-      url = request?.url ?? '';
-      method = request?.method ?? '';
     }
 
     // 크롬 자동 요청 등은 "무시"가 아니라 응답을 주고 끝내는 게 안전
     const ignoredPaths = ['/.well-known', '/favicon.ico', '/robots.txt'];
-    if (!isGraphql && response && typeof response.status === 'function' && ignoredPaths.some((p) => url.startsWith(p))) {
+    if (
+      !isGraphql &&
+      response &&
+      typeof response.status === 'function' &&
+      ignoredPaths.some((p) => url.startsWith(p))
+    ) {
       return response.status(204).end();
     }
 
@@ -65,7 +79,7 @@ export class CustomExceptionFilter implements ExceptionFilter {
     console.log('URL:', url);
     console.log('Method:', method);
     console.log('원본 예외 타입:', exception?.constructor?.name);
-    
+
     if (exception instanceof Error) {
       console.log('에러 메시지:', exception.message);
       console.log('스택 트레이스:', exception.stack);
@@ -127,12 +141,16 @@ export class CustomExceptionFilter implements ExceptionFilter {
 
     // ✅ 2) /graphql 요청이면: ApolloError로 변환해서 throw
     const finalMessage = error.details
-      ? JSON.stringify({ 
-          message: error.message, 
+      ? JSON.stringify({
+          message: error.message,
           errors: error.details,
-          stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+          stack:
+            process.env.NODE_ENV === 'development' ? error.stack : undefined,
         })
-      : error.message + (process.env.NODE_ENV === 'development' && error.stack ? `\n\nStack: ${error.stack}` : '');
+      : error.message +
+        (process.env.NODE_ENV === 'development' && error.stack
+          ? `\n\nStack: ${error.stack}`
+          : '');
 
     throw new ApolloError(finalMessage, String(error.status));
   }
