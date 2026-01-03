@@ -30,13 +30,24 @@ const resolveKey = (): Buffer => {
 const encryptionKey = resolveKey();
 
 export class EncryptionTransformer implements ValueTransformer {
-  to(value: string | null | undefined): string | null | undefined {
-    if (!value) return value;
+  to(value: string | Date | null | undefined): string | null | undefined {
+    if (value === null || value === undefined) return value as null | undefined;
+
+    // Date 객체인 경우 ISO 문자열로 변환
+    let stringValue: string;
+    if (value instanceof Date) {
+      stringValue = value.toISOString();
+    } else if (typeof value === 'string') {
+      stringValue = value;
+    } else {
+      // 다른 타입도 문자열로 변환 시도
+      stringValue = String(value);
+    }
 
     const iv = randomBytes(IV_LENGTH);
     const cipher = createCipheriv('aes-256-gcm', encryptionKey, iv);
     const encrypted = Buffer.concat([
-      cipher.update(value, 'utf8'),
+      cipher.update(stringValue, 'utf8'),
       cipher.final(),
     ]);
     const tag = cipher.getAuthTag();
@@ -44,7 +55,7 @@ export class EncryptionTransformer implements ValueTransformer {
     return Buffer.concat([iv, tag, encrypted]).toString('base64');
   }
 
-  from(value: string | null | undefined): string | null | undefined {
+  from(value: string | null | undefined): any {
     if (!value) return value;
 
     const payload = Buffer.from(value, 'base64');
@@ -63,7 +74,16 @@ export class EncryptionTransformer implements ValueTransformer {
       decipher.final(),
     ]);
 
-    return decrypted.toString('utf8');
+    const decryptedString = decrypted.toString('utf8');
+
+    // ISO 날짜 문자열인 경우 Date 객체로 변환
+    // ISO 8601 형식: YYYY-MM-DDTHH:mm:ss.sssZ
+    const isoDateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+    if (isoDateRegex.test(decryptedString)) {
+      return new Date(decryptedString);
+    }
+
+    return decryptedString;
   }
 }
 
