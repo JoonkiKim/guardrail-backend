@@ -44,7 +44,7 @@ export class Todo {
   @Field(() => String, { nullable: true })
   description?: string;
 
-  @Column({ transformer: encryptionTransformer })
+  @Column({ type: 'date' })
   @Field(() => Date)
   date: Date;
 
