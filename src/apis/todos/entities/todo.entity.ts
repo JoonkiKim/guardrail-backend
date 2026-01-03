@@ -44,7 +44,7 @@ export class Todo {
   @Field(() => String, { nullable: true })
   description?: string;
 
-  @Column()
+  @Column({ type: 'timestamp' })
   @Field(() => Date)
   date: Date;
 
