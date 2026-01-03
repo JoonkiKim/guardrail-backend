@@ -36,6 +36,10 @@ export class EncryptionTransformer implements ValueTransformer {
     // Date 객체인 경우 ISO 문자열로 변환
     let stringValue: string;
     if (value instanceof Date) {
+      // Invalid Date 체크
+      if (isNaN(value.getTime())) {
+        throw new Error('Invalid Date object passed to EncryptionTransformer');
+      }
       stringValue = value.toISOString();
     } else if (typeof value === 'string') {
       stringValue = value;
@@ -76,13 +80,8 @@ export class EncryptionTransformer implements ValueTransformer {
 
     const decryptedString = decrypted.toString('utf8');
 
-    // ISO 날짜 문자열인 경우 Date 객체로 변환
-    // ISO 8601 형식: YYYY-MM-DDTHH:mm:ss.sssZ
-    const isoDateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
-    if (isoDateRegex.test(decryptedString)) {
-      return new Date(decryptedString);
-    }
-
+    // 항상 문자열로 반환 (TypeORM이 Date 필드에 대해 자동으로 변환)
+    // Date 객체를 반환하면 transformer와 TypeORM의 Date 처리 간 충돌 발생
     return decryptedString;
   }
 }
