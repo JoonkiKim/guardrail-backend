@@ -84,17 +84,22 @@ export class AuthService {
 
     const isProduction = process.env.NODE_ENV === 'production';
 
+    // 2주 = 14일 = 1209600초
+    const maxAge = 1209600;
+    const expiresDate = new Date(Date.now() + maxAge * 1000);
+    const expiresString = expiresDate.toUTCString();
+
     if (isProduction) {
       // 배포 환경: 크로스 도메인 쿠키 설정
       context.res.setHeader(
         'set-Cookie',
-        `refreshToken=${refreshToken}; path=/; HttpOnly; SameSite=None; Secure; Max-Age=1209600`,
+        `refreshToken=${refreshToken}; path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}; Expires=${expiresString}`,
       );
     } else {
       // 개발 환경: localhost 간 통신
       context.res.setHeader(
         'set-Cookie',
-        `refreshToken=${refreshToken}; path=/; HttpOnly; SameSite=Lax; Max-Age=1209600`,
+        `refreshToken=${refreshToken}; path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}; Expires=${expiresString}`,
       );
     }
   }
