@@ -41,12 +41,12 @@ export class Guardrail {
   @Field(() => String)
   thanks: string;
 
-  @Column({ transformer: encryptionTransformer })
-  @Field(() => String)
-  regret: string;
-  // @Column({ transformer: encryptionTransformer, nullable: true })
-  // @Field(() => String, { nullable: true })
-  // regret?: string;
+  // @Column({ transformer: encryptionTransformer })
+  // @Field(() => String)
+  // regret: string;
+  @Column({ transformer: encryptionTransformer, nullable: true })
+  @Field(() => String, { nullable: true })
+  regret?: string;
 
   @Column({ transformer: encryptionTransformer })
   @Field(() => String)
