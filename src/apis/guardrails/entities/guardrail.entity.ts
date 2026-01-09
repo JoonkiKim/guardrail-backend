@@ -43,6 +43,10 @@ export class Guardrail {
 
   @Column({ transformer: encryptionTransformer })
   @Field(() => String)
+  regret: string;
+
+  @Column({ transformer: encryptionTransformer })
+  @Field(() => String)
   direction: string;
 
   @Column({ transformer: encryptionTransformer })

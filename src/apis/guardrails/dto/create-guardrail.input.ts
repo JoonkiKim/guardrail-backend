@@ -15,6 +15,9 @@ export class CreateGuardrailInput {
   thanks: string;
 
   @Field(() => String)
+  regret: string;
+
+  @Field(() => String)
   direction: string;
 
   @Field(() => String)

@@ -9,6 +9,7 @@ type Guardrail {
   mostImpt: String!
   diary: String!
   thanks: String!
+  regret: String!
   direction: String!
   oneStep: String!
   ignorance: String!
@@ -140,9 +141,6 @@ type Query {
 }
 
 type Mutation {
-  login(email: String!, password: String!): String!
-  restoreAccessToken: String!
-  logout: String!
   createUser(createUserInput: CreateUserInput!): User!
   updateUser(userId: String!, updateUserInput: UpdateUserInput!): User!
   deleteUser(userId: String!): String!
@@ -163,6 +161,9 @@ type Mutation {
   createPavlov(createPavlovInput: CreatePavlovInput!): Pavlov!
   updatePavlov(pavlovId: String!, updatePavlovInput: UpdatePavlovInput!): Pavlov!
   deletePavlov(pavlovId: String!): Boolean!
+  login(email: String!, password: String!): String!
+  restoreAccessToken: String!
+  logout: String!
 }
 
 input CreateUserInput {
@@ -211,6 +212,7 @@ input CreateGuardrailInput {
   mostImpt: String!
   diary: String!
   thanks: String!
+  regret: String!
   direction: String!
   oneStep: String!
   ignorance: String!
@@ -221,6 +223,7 @@ input UpdateGuardrailInput {
   mostImpt: String
   diary: String
   thanks: String
+  regret: String
   direction: String
   oneStep: String
   ignorance: String
