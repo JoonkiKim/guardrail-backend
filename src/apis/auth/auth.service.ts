@@ -89,19 +89,41 @@ export class AuthService {
     const expiresDate = new Date(Date.now() + maxAge * 1000);
     const expiresString = expiresDate.toUTCString();
 
+    // 쿠키 값 URL 인코딩 (사파리 호환성)
+    const encodedToken = encodeURIComponent(refreshToken);
+
     if (isProduction) {
       // 배포 환경: 크로스 도메인 쿠키 설정
       context.res.setHeader(
-        'set-Cookie',
-        `refreshToken=${refreshToken}; path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}; Expires=${expiresString}`,
+        'Set-Cookie', // 대문자로 명시
+        `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}; Expires=${expiresString}`,
       );
     } else {
-      // 개발 환경: localhost 간 통신
-      context.res.setHeader(
-        'set-Cookie',
-        `refreshToken=${refreshToken}; path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}; Expires=${expiresString}`,
-      );
+      // 개발 환경: HTTP/HTTPS 모두 지원
+      // 사파리에서도 작동하도록 HTTPS 여부 확인
+      const req = context.req || (context as any).request;
+      const isSecure =
+        req?.secure ||
+        req?.headers?.['x-forwarded-proto'] === 'https' ||
+        req?.protocol === 'https';
+
+      if (isSecure) {
+        // HTTPS 환경: Secure 사용 가능
+        context.res.setHeader(
+          'Set-Cookie',
+          `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}; Expires=${expiresString}`,
+        );
+      } else {
+        // HTTP 환경: Secure 없이 SameSite=Lax 사용
+        context.res.setHeader(
+          'Set-Cookie',
+          `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}; Expires=${expiresString}`,
+        );
+      }
     }
+
+    // 디버깅: 쿠키 헤더 확인
+    console.log('쿠키 설정:', context.res.getHeader('Set-Cookie'));
   }
 
   getAccessToken({ user }: IAuthServiceGetAccessToken): string {
