@@ -98,8 +98,6 @@ export class AuthService {
     console.log('인코딩된 토큰:', encodedToken);
     console.log('원본 토큰 길이:', refreshToken.length);
     console.log('인코딩된 토큰 길이:', encodedToken.length);
-    console.log('원본 토큰 (처음 50자):', refreshToken.substring(0, 50));
-    console.log('인코딩된 토큰 (처음 50자):', encodedToken.substring(0, 50));
 
     // 인코딩이 제대로 되었는지 확인
     if (refreshToken === encodedToken) {
@@ -141,45 +139,109 @@ export class AuthService {
       }
     }
 
+    // 디버깅: cookieString 자체 확인
+    console.log('===== 쿠키 문자열 검증 =====');
+    console.log('cookieString:', cookieString);
+    console.log(
+      'cookieString에 encodedToken 포함 여부:',
+      cookieString.includes(encodedToken),
+    );
+    console.log(
+      'cookieString에 원본 토큰 포함 여부:',
+      cookieString.includes(refreshToken),
+    );
+    console.log('================================');
+
     // GraphQL 응답에서 쿠키가 제대로 전달되도록 명시적으로 설정
     if (context.res && typeof context.res.setHeader === 'function') {
-      // 기존 헤더 제거 후 새로 설정 (중복 방지)
+      // 기존 헤더 제거
       try {
         context.res.removeHeader('Set-Cookie');
       } catch (error) {
         // removeHeader가 없으면 무시
       }
 
+      // setHeader 직전 헤더 확인
+      const beforeHeader = context.res.getHeader('Set-Cookie');
+      console.log('setHeader 직전 헤더:', beforeHeader);
+
+      // 헤더 설정
       context.res.setHeader('Set-Cookie', cookieString);
 
-      // 디버깅: 실제 설정된 헤더 확인
-      const setCookieHeader = context.res.getHeader('Set-Cookie');
+      // setHeader 직후 헤더 확인
+      const afterHeader = context.res.getHeader('Set-Cookie');
+      console.log('setHeader 직후 헤더:', afterHeader);
       console.log('✅ 쿠키 설정 완료');
-      console.log('✅ 쿠키 헤더:', setCookieHeader);
       console.log('✅ 쿠키 문자열 길이:', cookieString.length);
       console.log('✅ 환경:', isProduction ? 'Production' : 'Development');
 
       // 인코딩 확인: 헤더에 실제로 인코딩된 값이 들어갔는지 확인
-      if (setCookieHeader && typeof setCookieHeader === 'string') {
-        const headerValue = setCookieHeader.toString();
+      if (afterHeader) {
+        let headerValue: string;
+
+        // 배열인 경우 처리
+        if (Array.isArray(afterHeader)) {
+          headerValue = afterHeader[0] || '';
+        } else {
+          headerValue = afterHeader.toString();
+        }
+
+        console.log(
+          '헤더 값 타입:',
+          typeof afterHeader,
+          Array.isArray(afterHeader),
+        );
+        console.log('헤더 값:', headerValue);
+
         if (headerValue.includes('refreshToken=')) {
           const tokenInHeader = headerValue
             .split('refreshToken=')[1]
-            ?.split(';')[0];
+            ?.split(';')[0]
+            ?.trim();
+
           if (tokenInHeader) {
+            console.log('헤더에서 추출한 토큰:', tokenInHeader);
+            console.log('원본 토큰과 비교:', tokenInHeader === refreshToken);
+            console.log(
+              '인코딩된 토큰과 비교:',
+              tokenInHeader === encodedToken,
+            );
+
             if (tokenInHeader === refreshToken) {
               console.error(
                 '❌ 쿠키 값이 인코딩되지 않았습니다! 헤더에 원본 토큰이 있습니다.',
               );
               console.error('원본 토큰:', tokenInHeader);
+
+              // 강제로 다시 인코딩하여 설정 시도
+              console.log('🔄 인코딩된 값으로 다시 설정 시도...');
+              const retryCookieString = cookieString.replace(
+                refreshToken,
+                encodedToken,
+              );
+              context.res.setHeader('Set-Cookie', retryCookieString);
+              console.log(
+                '재설정 후 헤더:',
+                context.res.getHeader('Set-Cookie'),
+              );
             } else if (tokenInHeader === encodedToken) {
               console.log(
                 '✅ 쿠키 값이 제대로 인코딩되어 헤더에 설정되었습니다.',
               );
             } else {
               console.warn('⚠️ 헤더의 토큰 값이 예상과 다릅니다.');
-              console.warn('헤더의 토큰:', tokenInHeader.substring(0, 50));
-              console.warn('예상 인코딩:', encodedToken.substring(0, 50));
+              console.warn(
+                '헤더의 토큰 (처음 50자):',
+                tokenInHeader.substring(0, 50),
+              );
+              console.warn(
+                '예상 인코딩 (처음 50자):',
+                encodedToken.substring(0, 50),
+              );
+              console.warn(
+                '원본 토큰 (처음 50자):',
+                refreshToken.substring(0, 50),
+              );
             }
           }
         }
