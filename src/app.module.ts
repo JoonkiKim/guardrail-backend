@@ -42,6 +42,10 @@ import { HealthController } from './health.controller';
           'https://guardrail-fawn.vercel.app', // 프로덕션 환경
         ],
         credentials: true,
+        // 사파리 호환성을 위한 추가 옵션
+        methods: ['GET', 'POST', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+        exposedHeaders: ['Set-Cookie'],
       },
       formatError: (error) => {
         console.log('에러 받았다~');

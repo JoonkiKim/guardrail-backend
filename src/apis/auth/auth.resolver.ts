@@ -13,6 +13,7 @@ import {
 import * as jwt from 'jsonwebtoken';
 import { Cache } from 'cache-manager';
 import { Public } from 'src/commons/decorators/public.decorator';
+import { getCookieValue } from 'src/commons/utils/cookie.util';
 
 @Resolver()
 export class AuthResolver {
@@ -52,26 +53,9 @@ export class AuthResolver {
     const accessToken = authHeader.startsWith('Bearer ')
       ? authHeader.slice(7)
       : undefined;
-    // const refreshToken = req.cookies?.refreshToken; // cookie-parser 로 파싱된 쿠키에서
-
-    // 쿠키에서 리프레시토큰 가져오기 -> 앞으로 요거로 하자
-    const rawCookie = req.headers.cookie;
-
-    // 문자열인 경우만 split 사용
-    const cookieHeader =
-      typeof rawCookie === 'string'
-        ? rawCookie
-        : Array.isArray(rawCookie)
-        ? rawCookie.join(';') // 배열이면 적당히 합쳐주고
-        : ''; // undefined인 경우 빈 문자열
-
-    const cookies = cookieHeader.split(';').reduce((acc, part) => {
-      const [k, v] = part.trim().split('=');
-      if (k && v) acc[k] = v;
-      return acc;
-    }, {} as Record<string, string>);
-
-    const refreshToken = cookies['refreshToken'];
+    // 쿠키에서 리프레시토큰 가져오기 (통일된 파싱 함수 사용)
+    const cookieHeader = req.headers.cookie;
+    const refreshToken = getCookieValue(cookieHeader, 'refreshToken');
 
     console.log('accessToken', accessToken);
     console.log('refreshToken', refreshToken);
