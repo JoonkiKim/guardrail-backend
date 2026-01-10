@@ -92,15 +92,30 @@ export class AuthService {
     // 쿠키 값 URL 인코딩 (사파리 호환성)
     const encodedToken = encodeURIComponent(refreshToken);
 
+    // 쿠키 값 검증을 위한 디버깅 로그
+    console.log('===== 쿠키 값 검증 =====');
+    console.log('원본 토큰 길이:', refreshToken.length);
+    console.log('인코딩된 토큰 길이:', encodedToken.length);
+    console.log('원본 토큰 (처음 50자):', refreshToken.substring(0, 50));
+    console.log('인코딩된 토큰 (처음 50자):', encodedToken.substring(0, 50));
+
+    // 쿠키 크기 확인 (사파리 제한: 4KB)
+    if (encodedToken.length > 4000) {
+      console.warn('⚠️ 쿠키 값이 너무 큽니다:', encodedToken.length, 'bytes');
+    } else {
+      console.log('✅ 쿠키 크기 OK:', encodedToken.length, 'bytes');
+    }
+    console.log('========================');
+
+    // 사파리 호환성을 위한 쿠키 속성 순서 (권장 순서)
+    // 속성 순서: Path → HttpOnly → SameSite → Secure → Max-Age → Expires
+    let cookieString: string;
+
     if (isProduction) {
       // 배포 환경: 크로스 도메인 쿠키 설정
-      context.res.setHeader(
-        'Set-Cookie', // 대문자로 명시
-        `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}; Expires=${expiresString}`,
-      );
+      cookieString = `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}; Expires=${expiresString}`;
     } else {
       // 개발 환경: HTTP/HTTPS 모두 지원
-      // 사파리에서도 작동하도록 HTTPS 여부 확인
       const req = context.req || (context as any).request;
       const isSecure =
         req?.secure ||
@@ -109,21 +124,31 @@ export class AuthService {
 
       if (isSecure) {
         // HTTPS 환경: Secure 사용 가능
-        context.res.setHeader(
-          'Set-Cookie',
-          `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}; Expires=${expiresString}`,
-        );
+        cookieString = `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}; Expires=${expiresString}`;
       } else {
         // HTTP 환경: Secure 없이 SameSite=Lax 사용
-        context.res.setHeader(
-          'Set-Cookie',
-          `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}; Expires=${expiresString}`,
-        );
+        // 사파리에서 HTTP 환경에서는 SameSite=Lax가 더 안정적
+        cookieString = `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}; Expires=${expiresString}`;
       }
     }
 
-    // 디버깅: 쿠키 헤더 확인
-    console.log('쿠키 설정:', context.res.getHeader('Set-Cookie'));
+    // GraphQL 응답에서 쿠키가 제대로 전달되도록 명시적으로 설정
+    // appendHeader 대신 setHeader 사용 (덮어쓰기 방지)
+    if (context.res && typeof context.res.setHeader === 'function') {
+      context.res.setHeader('Set-Cookie', cookieString);
+
+      // 디버깅: 실제 설정된 헤더 확인
+      const setCookieHeader = context.res.getHeader('Set-Cookie');
+      console.log('✅ 쿠키 설정 완료');
+      console.log('✅ 쿠키 헤더:', setCookieHeader);
+      console.log('✅ 쿠키 문자열 길이:', cookieString.length);
+      console.log('✅ 환경:', isProduction ? 'Production' : 'Development');
+    } else {
+      console.error(
+        '❌ context.res가 없거나 setHeader 메서드가 없습니다:',
+        context,
+      );
+    }
   }
 
   getAccessToken({ user }: IAuthServiceGetAccessToken): string {
