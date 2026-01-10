@@ -119,10 +119,9 @@ export class AuthService {
     let cookieString: string;
 
     if (isProduction) {
-      // 배포 환경: 크로스 도메인 쿠키 설정
-      cookieString = `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}; Expires=${expiresString}`;
+      // 배포 환경: 사파리 호환성을 위한 속성 순서 조정
+      cookieString = `refreshToken=${encodedToken}; Path=/; Expires=${expiresString}; Max-Age=${maxAge}; Secure; HttpOnly; SameSite=None`;
     } else {
-      // 개발 환경: HTTP/HTTPS 모두 지원
       const req = context.req || (context as any).request;
       const isSecure =
         req?.secure ||
@@ -130,12 +129,9 @@ export class AuthService {
         req?.protocol === 'https';
 
       if (isSecure) {
-        // HTTPS 환경: Secure 사용 가능
-        cookieString = `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}; Expires=${expiresString}`;
+        cookieString = `refreshToken=${encodedToken}; Path=/; Expires=${expiresString}; Max-Age=${maxAge}; Secure; HttpOnly; SameSite=None`;
       } else {
-        // HTTP 환경: Secure 없이 SameSite=Lax 사용
-        // 사파리에서 HTTP 환경에서는 SameSite=Lax가 더 안정적
-        cookieString = `refreshToken=${encodedToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}; Expires=${expiresString}`;
+        cookieString = `refreshToken=${encodedToken}; Path=/; Expires=${expiresString}; Max-Age=${maxAge}; HttpOnly; SameSite=Lax`;
       }
     }
 
