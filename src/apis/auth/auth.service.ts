@@ -119,8 +119,8 @@ export class AuthService {
     let cookieString: string;
 
     if (isProduction) {
-      // 배포 환경: 사파리 호환성을 위한 속성 순서 조정
-      cookieString = `refreshToken=${encodedToken}; Path=/; Expires=${expiresString}; Max-Age=${maxAge}; Secure; HttpOnly; SameSite=None`;
+      // 배포 환경: 프록시 사용 시 같은 도메인이므로 SameSite=Lax 사용 (사파리 호환성 향상)
+      cookieString = `refreshToken=${encodedToken}; Path=/; Expires=${expiresString}; Max-Age=${maxAge}; Secure; HttpOnly; SameSite=Lax`;
     } else {
       const req = context.req || (context as any).request;
       const isSecure =
@@ -129,8 +129,10 @@ export class AuthService {
         req?.protocol === 'https';
 
       if (isSecure) {
-        cookieString = `refreshToken=${encodedToken}; Path=/; Expires=${expiresString}; Max-Age=${maxAge}; Secure; HttpOnly; SameSite=None`;
+        // 개발 환경 HTTPS: SameSite=Lax 사용
+        cookieString = `refreshToken=${encodedToken}; Path=/; Expires=${expiresString}; Max-Age=${maxAge}; Secure; HttpOnly; SameSite=Lax`;
       } else {
+        // 개발 환경 HTTP: SameSite=Lax 사용
         cookieString = `refreshToken=${encodedToken}; Path=/; Expires=${expiresString}; Max-Age=${maxAge}; HttpOnly; SameSite=Lax`;
       }
     }
