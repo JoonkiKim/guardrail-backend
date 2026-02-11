@@ -35,7 +35,11 @@ import { HealthController } from './health.controller';
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: 'src/commons/graphql/schema.gql',
-      context: ({ req, res }) => ({ req, res }),
+      context: ({ req, res }) => {
+        console.log('AUTH HEADER:', req.headers.authorization);
+        console.log('COOKIE:', req.headers.cookie);
+        return { req, res };
+      },
       cors: {
         origin: [
           'http://localhost:3000', // 개발 환경
