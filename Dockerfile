@@ -23,8 +23,13 @@ WORKDIR /myfolder/
 # 프로덕션 빌드를 위해 모든 의존성 설치
 RUN yarn install
 
-# 소스 코드 복사 및 빌드
+# 소스 코드 복사 (dist 제외)
 COPY . /myfolder/
+
+# 기존 dist 폴더 삭제 (혹시 모를 경우 대비)
+RUN rm -rf /myfolder/dist
+
+# 빌드
 RUN yarn build
 
 # 빌드 결과 확인
