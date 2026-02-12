@@ -36,7 +36,16 @@ import { HealthController } from './health.controller';
       driver: ApolloDriver,
       persistedQueries: false,
       autoSchemaFile: 'src/commons/graphql/schema.gql',
-      context: ({ req, res }) => ({ req, res }),
+      context: ({ req, res }) => {
+        // 디버깅 로그 (GraphQL 요청만)
+        if (req.url === '/graphql') {
+          console.log('===== GraphQL 요청 수신 =====');
+          console.log('Authorization:', req.headers.authorization ? '존재' : '없음');
+          console.log('Cookie:', req.headers.cookie ? '존재' : '없음');
+          console.log('==============================');
+        }
+        return { req, res };
+      },
       cors: {
         origin: [
           'http://localhost:3000', // 개발 환경

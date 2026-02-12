@@ -25,29 +25,59 @@ export class GqlAuthGuardGlobal extends AuthGuard('access') {
     const url = req?.url ?? req?.originalUrl ?? '';
     const method = req?.method ?? '';
 
+    console.log('===== Guard 검증 시작 =====');
+    console.log('요청 URL:', url);
+    console.log('요청 Method:', method);
+    console.log('Authorization 헤더:', req.headers?.authorization ? '존재' : '없음');
+    console.log('쿠키:', req.headers?.cookie ? '존재' : '없음');
+
     // ✅ Render Health Check 예외 처리
     if (url === '/healthz' || url.startsWith('/healthz')) {
+      console.log('✅ Health Check 요청 - 인증 스킵');
       return true;
     }
 
     // ✅ GraphQL GET 요청 예외 처리 (introspection, Playground 등)
     if (url === '/graphql' && method === 'GET') {
+      console.log('✅ GraphQL GET 요청 - 인증 스킵');
       return true;
     }
 
-  // ✅ 루트 경로 GET/HEAD 요청 예외 처리 (Render 헬스 체크)
-  if (url === '/' && (method === 'GET' || method === 'HEAD')) {
-    return true;
-  }
+    // ✅ 루트 경로 GET/HEAD 요청 예외 처리 (Render 헬스 체크)
+    if (url === '/' && (method === 'GET' || method === 'HEAD')) {
+      console.log('✅ 루트 경로 GET/HEAD 요청 - 인증 스킵');
+      return true;
+    }
 
     // 기존 Public 데코레이터 로직 유지
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
-    if (isPublic) return true;
+    
+    if (isPublic) {
+      console.log('✅ Public 데코레이터 - 인증 스킵');
+      return true;
+    }
 
+    console.log('🔒 인증 필요 - Guard 통과');
+    console.log('=====================================');
+    
     return super.canActivate(context) as any;
+  }
+
+  handleRequest(err: any, user: any, info: any, context: any) {
+    console.log('===== Guard handleRequest =====');
+    console.log('에러:', err ? err.message : '없음');
+    console.log('사용자:', user ? `User ID: ${user.id}` : '없음');
+    console.log('Info:', info);
+    console.log('=====================================');
+    
+    if (err || !user) {
+      console.error('❌ 인증 실패:', err?.message || info?.message || '사용자 없음');
+    }
+    
+    return super.handleRequest(err, user, info, context);
   }
 }
 
