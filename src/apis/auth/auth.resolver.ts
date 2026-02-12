@@ -5,13 +5,10 @@ import { AuthService } from './auth.service';
 import { IContext } from 'src/commons/interfaces/context';
 import { GqlAuthGuard } from './guards/gql-auth.guard';
 import {
-  CACHE_MANAGER,
-  Inject,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
-import { Cache } from 'cache-manager';
 import { Public } from 'src/commons/decorators/public.decorator';
 import { getCookieValue } from 'src/commons/utils/cookie.util';
 
@@ -19,8 +16,6 @@ import { getCookieValue } from 'src/commons/utils/cookie.util';
 export class AuthResolver {
   constructor(
     private readonly authService: AuthService, //
-    @Inject(CACHE_MANAGER)
-    private readonly cacheManager: Cache,
   ) {}
 
   @Public()
@@ -68,46 +63,14 @@ export class AuthResolver {
     let decodedRT: any;
 
     try {
-      decodedAT = jwt.verify(accessToken, process.env.JWT_PASSWORD);
-      decodedRT = jwt.verify(refreshToken, process.env.JWT_REFRESH_PASSWORD);
+      jwt.verify(accessToken, process.env.JWT_PASSWORD);
+      jwt.verify(refreshToken, process.env.JWT_REFRESH_PASSWORD);
     } catch (err) {
       throw new UnauthorizedException('Unauthorized');
     }
 
-    // exp는 UNIX timestamp (초 단위) 로 반환됩니다.
-    // 현재 시각(nowSec)과 만료 시각(accessExp)의 차이를 구해야만 Redis 에서 정확한 TTL을 설정할 수 있어요.
-    const nowSec = Math.floor(Date.now() / 1000);
-
-    const accessExp = decodedAT.exp as number;
-    const refreshExp = decodedRT.exp as number;
-    console.log(accessExp);
-
-    console.log(refreshExp);
-    const accessTTL = accessExp > nowSec ? accessExp - nowSec : 0;
-    const refreshTTL = refreshExp > nowSec ? refreshExp - nowSec : 0;
-    console.log(accessTTL);
-
-    console.log(refreshTTL);
-    // Redis에 블랙리스트용으로 저장
-    // key자리에 토큰을 넣는패턴은 흔하다!
-    try {
-      await this.cacheManager.set(`accessToken:${accessToken}`, 'accessToken', {
-        ttl: accessTTL,
-      });
-
-      await this.cacheManager.set(
-        `refreshToken:${refreshToken}`,
-        'refreshToken',
-        {
-          ttl: refreshTTL,
-        },
-      );
-    } catch (err) {
-      console.log(err);
-    }
-
-    // console.log('accessLogout', accessLogout);
-    // console.log('refreshLogout', refreshLogout);
+    // Redis 저장 제거 - 로그아웃은 토큰 검증만 수행하고 완료
+    // Redis를 사용하지 않으므로 블랙리스트 기능 비활성화
 
     return '로그아웃에 성공했습니다.';
   }

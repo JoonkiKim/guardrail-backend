@@ -1,16 +1,12 @@
 // 리프레시토큰을 인가해주기 위한 stratey 클래스를 만들어보자
 // Bearer에서 가져오는게 아니라 쿠키에서 리프레시토큰을 뽑아오고 그걸 검증해야된다
-import { CACHE_MANAGER, Inject, UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-jwt';
-import { Cache } from 'cache-manager';
 import { parseCookies, getCookieValue } from 'src/commons/utils/cookie.util';
 
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
-  constructor(
-    @Inject(CACHE_MANAGER)
-    private readonly cacheManager: Cache,
-  ) {
+  constructor() {
     super({
       // ✅ 쿠키 제대로 파싱하기 (통일된 파싱 함수 사용)
       jwtFromRequest: (req) => {
@@ -53,14 +49,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
       throw new UnauthorizedException('리프레시 토큰이 존재하지 않습니다.');
     }
 
-    // 2) Redis에 블랙리스트된 키 전체로 조회
-    const blacklisted = await this.cacheManager.get<string>(
-      `refreshToken:${refreshToken}`,
-    );
-    if (blacklisted) {
-      // 키가 존재하면 이미 로그아웃된 토큰
-      throw new UnauthorizedException('이미 로그아웃된 리프레시 토큰입니다.');
-    }
+    // Redis 조회 제거 - 로그아웃 체크 없이 바로 진행
 
     return { id: payload.sub };
   }
