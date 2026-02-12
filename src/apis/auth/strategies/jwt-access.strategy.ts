@@ -40,9 +40,20 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'access') {
       // Redis 조회 시작
       console.log('Redis 조회 시작...');
       try {
-        const isLoggedOut = await this.cacheManager.get<string>(
+        // 타임아웃 추가 (2초)
+        const redisPromise = this.cacheManager.get<string>(
           `accessToken:${token}`,
         );
+        
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Redis 타임아웃 (1초 초과)')), 1000);
+        });
+        
+        const isLoggedOut = await Promise.race([
+          redisPromise,
+          timeoutPromise,
+        ]) as string | undefined;
+        
         console.log('로그아웃 여부:', isLoggedOut ? '로그아웃됨' : '정상');
         
         if (isLoggedOut) {
@@ -51,6 +62,8 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'access') {
         }
       } catch (redisError) {
         console.error('❌ Redis 조회 에러:', redisError);
+        console.error('에러 타입:', redisError?.constructor?.name);
+        console.error('에러 메시지:', redisError?.message);
         // Redis 에러가 발생해도 계속 진행 (Redis가 없어도 동작하도록)
         console.warn('⚠️ Redis 조회 실패, 계속 진행...');
       }
