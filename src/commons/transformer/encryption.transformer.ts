@@ -1,5 +1,9 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { ValueTransformer } from 'typeorm';
+import * as dotenv from 'dotenv';
+
+// .env 파일 로드 (ConfigModule보다 먼저 실행되도록)
+dotenv.config();
 
 const SUPPORTED_KEY_LENGTH = 32;
 const IV_LENGTH = 12;
