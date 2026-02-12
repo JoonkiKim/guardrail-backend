@@ -35,10 +35,10 @@ export class GqlAuthGuardGlobal extends AuthGuard('access') {
       return true;
     }
 
-    // ✅ 루트 경로 GET 요청 예외 처리
-    if (url === '/' && method === 'GET') {
-      return true;
-    }
+  // ✅ 루트 경로 GET/HEAD 요청 예외 처리 (Render 헬스 체크)
+  if (url === '/' && (method === 'GET' || method === 'HEAD')) {
+    return true;
+  }
 
     // 기존 Public 데코레이터 로직 유지
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
