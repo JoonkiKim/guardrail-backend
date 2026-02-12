@@ -38,10 +38,28 @@ import { HealthController } from './health.controller';
       autoSchemaFile: 'src/commons/graphql/schema.gql',
       context: ({ req, res }) => {
         // 디버깅 로그 (GraphQL 요청만)
-        if (req.url === '/graphql') {
+        if (req.url === '/graphql' || req.url === '/') {
           console.log('===== GraphQL 요청 수신 =====');
+          console.log('요청 URL:', req.url);
+          console.log('원본 URL:', req.originalUrl);
+          console.log('요청 Method:', req.method);
           console.log('Authorization:', req.headers.authorization ? '존재' : '없음');
           console.log('Cookie:', req.headers.cookie ? '존재' : '없음');
+          
+          // 프록시 관련 헤더 확인
+          console.log('X-Forwarded-Path:', req.headers['x-forwarded-path'] || '없음');
+          console.log('X-Forwarded-Uri:', req.headers['x-forwarded-uri'] || '없음');
+          console.log('X-Forwarded-For:', req.headers['x-forwarded-for'] || '없음');
+          console.log('X-Forwarded-Host:', req.headers['x-forwarded-host'] || '없음');
+          console.log('X-Original-URL:', req.headers['x-original-url'] || '없음');
+          
+          // 응답 이벤트 리스너 추가
+          res.on('finish', () => {
+            console.log('===== GraphQL 응답 전송 =====');
+            console.log('상태 코드:', res.statusCode);
+            console.log('==============================');
+          });
+          
           console.log('==============================');
         }
         return { req, res };

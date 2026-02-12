@@ -23,10 +23,12 @@ export class GqlAuthGuardGlobal extends AuthGuard('access') {
   canActivate(context: ExecutionContext) {
     const req = this.getRequest(context);
     const url = req?.url ?? req?.originalUrl ?? '';
+    const originalUrl = req?.originalUrl ?? '';
     const method = req?.method ?? '';
 
     console.log('===== Guard 검증 시작 =====');
     console.log('요청 URL:', url);
+    console.log('원본 URL:', originalUrl);
     console.log('요청 Method:', method);
     console.log('Authorization 헤더:', req.headers?.authorization ? '존재' : '없음');
     console.log('쿠키:', req.headers?.cookie ? '존재' : '없음');
@@ -37,10 +39,17 @@ export class GqlAuthGuardGlobal extends AuthGuard('access') {
       return true;
     }
 
-    // ✅ GraphQL GET 요청 예외 처리 (introspection, Playground 등)
-    if (url === '/graphql' && method === 'GET') {
-      console.log('✅ GraphQL GET 요청 - 인증 스킵');
-      return true;
+    // ✅ GraphQL 경로 예외 처리 (Vercel 프록시로 인해 URL이 변경될 수 있음)
+    const isGraphQLPath = url === '/graphql' || url.startsWith('/graphql') || url === '/';
+    
+    if (isGraphQLPath) {
+      // GET 요청은 introspection/Playground용으로 허용
+      if (method === 'GET') {
+        console.log('✅ GraphQL GET 요청 - 인증 스킵');
+        return true;
+      }
+      // POST 요청은 인증 필요 (아래로 진행)
+      console.log('🔒 GraphQL POST 요청 - 인증 필요');
     }
 
     // ✅ 루트 경로 GET/HEAD 요청 예외 처리 (Render 헬스 체크)
