@@ -26,15 +26,19 @@ RUN yarn install
 # 소스 코드 복사 (dist 제외)
 COPY . /myfolder/
 
-# 기존 dist 폴더 삭제 (혹시 모를 경우 대비)
+# 기존 dist 폴더 삭제
 RUN rm -rf /myfolder/dist
 
-# 빌드
-RUN yarn build
+# 빌드 (에러 확인을 위해 상세 출력)
+RUN yarn build 2>&1 | tee /tmp/build.log || (cat /tmp/build.log && exit 1)
+
+# 빌드 후 전체 구조 확인
+RUN echo "=== 전체 파일 구조 ===" && find /myfolder -name "main.js" -type f
+RUN echo "=== dist 폴더 내용 ===" && ls -laR /myfolder/dist/ || echo "dist 폴더 없음"
+RUN echo "=== 현재 디렉토리 ===" && pwd && ls -la
 
 # 빌드 결과 확인
-RUN ls -la /myfolder/dist/ || (echo "Build failed! dist folder not found" && exit 1)
-RUN test -f /myfolder/dist/main.js || (echo "dist/main.js not found!" && exit 1)
+RUN test -f /myfolder/dist/main.js || (echo "dist/main.js not found!" && find /myfolder -name "*.js" -type f | head -20 && exit 1)
 
 # 프로덕션 모드로 실행
 CMD ["node", "dist/main"]
