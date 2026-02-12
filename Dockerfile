@@ -38,9 +38,9 @@ RUN echo "=== dist 폴더 내용 ===" && ls -laR /myfolder/dist/ || echo "dist �
 RUN echo "=== 현재 디렉토리 ===" && pwd && ls -la
 
 # 빌드 결과 확인
-RUN test -f /myfolder/dist/main.js || (echo "dist/main.js not found!" && find /myfolder -name "*.js" -type f | head -20 && exit 1)
+RUN test -f /myfolder/dist/src/main.js || (echo "dist/src/main.js not found!" && exit 1)
 
 # 프로덕션 모드로 실행
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]
 
 
